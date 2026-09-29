@@ -13,7 +13,7 @@ import time
 import uuid
 import requests  # robust redirect handling
 
-SERVER_URL = "https://script.google.com/macros/s/AKfycbwVmUlj8JD8khu0vKl5dvaggXQOl9iiWdwIiATwGqFruqETN8mIe2HyLEl1szLSZF8h/exec"
+SERVER_URL = "https://script.google.com/macros/s/AKfycbwESAvWYWyvApeBU8h0MUcVlS9nwd7yShirpkse5nokd166fBcOtIHFaCQiDp3M-tfy/exec"
 ID_FILE = os.path.expanduser("~/.alex_live_id")
 GRACE_SECONDS = 6 * 3600  # keep running this long if internet/server is down
 CHECK_EVERY = 300
