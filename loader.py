@@ -10,12 +10,12 @@ import subprocess
 import sys
 import threading
 import time
-import urllib.request
 import uuid
+import requests  # robust redirect handling
 
 SERVER_URL = "https://script.google.com/macros/s/AKfycbxi63fysAOTRPaCvi9S6NiwvnLdLhGVlTocfBkUAuiie0BftpzkR6ULA7Jmo61nZUdx/exec"
 ID_FILE = os.path.expanduser("~/.alex_live_id")
-GRACE_SECONDS = 6 * 3600  # keep running this long if the internet/server is briefly down
+GRACE_SECONDS = 6 * 3600  # keep running this long if internet/server is down
 CHECK_EVERY = 300
 
 GREEN, RED, YELLOW, CYAN, RESET = "\033[92m", "\033[91m", "\033[93m", "\033[96m", "\033[0m"
@@ -37,21 +37,14 @@ DEVICE_ID = device_id()
 
 
 def call(action, timeout=30):
-    payload = json.dumps({"action": action, "device_id": DEVICE_ID}).encode('utf-8')
-    
-    class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, req, fp, code, msg, headers, newurl):
-            return urllib.request.Request(newurl, data=payload, headers={"Content-Type": "application/json"})
-
-    opener = urllib.request.build_opener(NoRedirectHandler)
-    req = urllib.request.Request(SERVER_URL, data=payload, headers={"Content-Type": "application/json"})
-    
-    with opener.open(req, timeout=timeout) as r:
-        return json.loads(r.read().decode('utf-8'))
+    payload = {"action": action, "device_id": DEVICE_ID}
+    # requests automatically follows 302 redirects properly
+    r = requests.post(SERVER_URL, json=payload, timeout=timeout, allow_redirects=True)
+    return r.json()
 
 
 def license_ok():
-    """True while this device is approved (short internet drops are tolerated)."""
+    """True while this device is approved."""
     global last_ok
     try:
         r = call("check", 20)
@@ -75,8 +68,6 @@ def watchdog():
 def main():
     print(CYAN + "\n  ALEX Live Streamer" + RESET)
     print(f"  Your Device ID: {YELLOW}{DEVICE_ID}{RESET}\n")
-    if "PASTE_YOUR" in SERVER_URL:
-        sys.exit("Server URL is not set in loader.py")
 
     shown = None
     while True:
@@ -88,9 +79,11 @@ def main():
                 shown = "net"
             time.sleep(15)
             continue
+            
         st = r.get("status")
         if st == "approved" and r.get("code"):
             break
+            
         if st != shown:
             shown = st
             if st == "pending":
@@ -98,8 +91,7 @@ def main():
                 print("  Send this Device ID to ALEX on WhatsApp: +8801629842299")
                 print("  Waiting for approval (checks every 15 seconds)...")
             elif st == "expired":
-                print(RED + "  Subscription expired. Contact ALEX on WhatsApp"
-                      " +8801629842299 to renew." + RESET)
+                print(RED + "  Subscription expired. Contact ALEX on WhatsApp +8801629842299 to renew." + RESET)
             elif st == "blocked":
                 print(RED + "  This device is blocked. Contact ALEX." + RESET)
             else:
