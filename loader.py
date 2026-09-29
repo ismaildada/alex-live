@@ -13,7 +13,7 @@ import time
 import urllib.request
 import uuid
 
-SERVER_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"
+SERVER_URL = "https://script.google.com/macros/s/AKfycbxi63fysAOTRPaCvi9S6NiwvnLdLhGVlTocfBkUAuiie0BftpzkR6ULA7Jmo61nZUdx/exec"
 ID_FILE = os.path.expanduser("~/.alex_live_id")
 GRACE_SECONDS = 6 * 3600  # keep running this long if the internet/server is briefly down
 CHECK_EVERY = 300
