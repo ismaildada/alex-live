@@ -37,10 +37,17 @@ DEVICE_ID = device_id()
 
 
 def call(action, timeout=30):
-    body = json.dumps({"action": action, "device_id": DEVICE_ID}).encode()
-    req = urllib.request.Request(SERVER_URL, body, {"Content-Type": "text/plain"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode())
+    payload = json.dumps({"action": action, "device_id": DEVICE_ID}).encode('utf-8')
+    
+    class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return urllib.request.Request(newurl, data=payload, headers={"Content-Type": "application/json"})
+
+    opener = urllib.request.build_opener(NoRedirectHandler)
+    req = urllib.request.Request(SERVER_URL, data=payload, headers={"Content-Type": "application/json"})
+    
+    with opener.open(req, timeout=timeout) as r:
+        return json.loads(r.read().decode('utf-8'))
 
 
 def license_ok():
@@ -75,7 +82,7 @@ def main():
     while True:
         try:
             r = call("run")
-        except Exception:
+        except Exception as e:
             if shown != "net":
                 print(RED + "  Cannot reach server. Check internet, retrying..." + RESET)
                 shown = "net"
