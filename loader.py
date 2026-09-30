@@ -11,14 +11,14 @@ import sys
 import threading
 import time
 import uuid
-import requests  # robust redirect handling
+import requests
 
 SERVER_URL = "https://script.google.com/macros/s/AKfycbwD4TdCkj23YdkKJInrUK3_LuihwJRO6bWuO_sJdAM7m7yOY4zLF8Kj-7x9RZ6hVpLaww/exec"
 ID_FILE = os.path.expanduser("~/.alex_live_id")
-GRACE_SECONDS = 6 * 3600  # keep running this long if internet/server is down
+GRACE_SECONDS = 6 * 3600
 CHECK_EVERY = 300
 
-GREEN, RED, YELLOW, CYAN, RESET = "\033[92m", "\033[91m", "\033[93m", "\033[96m", "\033[0m"
+GREEN, RED, YELLOW, CYAN, BOLD, RESET = "\033[92m", "\033[91m", "\033[93m", "\033[96m", "\033[1m", "\033[0m"
 last_ok = time.time()
 
 
@@ -38,7 +38,6 @@ DEVICE_ID = device_id()
 
 def call(action, timeout=30):
     payload = {"action": action, "device_id": DEVICE_ID}
-    # requests automatically follows 302 redirects properly
     r = requests.post(SERVER_URL, json=payload, timeout=timeout, allow_redirects=True)
     return r.json()
 
@@ -50,7 +49,8 @@ def license_ok():
         r = call("check", 20)
     except Exception:
         return (time.time() - last_ok) < GRACE_SECONDS
-    if r.get("status") == "approved":
+    
+    if str(r.get("status", "")).lower() == "approved":
         last_ok = time.time()
         return True
     return False
@@ -75,15 +75,16 @@ def main():
             r = call("run")
         except Exception as e:
             if shown != "net":
-               print(RED + BOLD + "\n  [×] CONNECTION ERROR | Unable to reach server. Retrying..." + RESET)
-shown = "net"
+                print(RED + BOLD + "\n  [×] CONNECTION ERROR | Unable to reach server. Retrying..." + RESET)
+                shown = "net"
             time.sleep(15)
             continue
-            
-        st = r.get("status")
+
+        st = str(r.get("status", "")).lower()
+
         if st == "approved" and r.get("code"):
             break
-            
+
         if st != shown:
             shown = st
             if st == "pending":
