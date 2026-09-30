@@ -75,8 +75,8 @@ def main():
             r = call("run")
         except Exception as e:
             if shown != "net":
-                print(RED + "  Cannot reach server. Check internet, retrying..." + RESET)
-                shown = "net"
+               print(RED + BOLD + "\n  [×] CONNECTION ERROR | Unable to reach server. Retrying..." + RESET)
+shown = "net"
             time.sleep(15)
             continue
             
